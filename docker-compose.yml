@@ -49,3 +49,13 @@ services:
       - 9090:9090
     depends_on:
       - nacos
+
+  # Grafana: http://localhost:3000/
+  # admin/admin
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:${GRAFANA_VERSION:-latest}
+    ports:
+      - 3000:3000
+    restart: on-failure
+

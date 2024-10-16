@@ -7,3 +7,5 @@ rm -rf ./data/mysql/*
 docker container rm -f nacos
 
 docker container rm -f prometheus
+
+docker container rm -f grafana
