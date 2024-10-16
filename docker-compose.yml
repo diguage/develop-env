@@ -1,4 +1,5 @@
 services:
+  # mysql -h127.0.0.1 -uroot -p123456
   mysql:
     container_name: mysql
     build:
@@ -16,3 +17,19 @@ services:
       interval: 5s
       timeout: 10s
       retries: 10
+
+  # Nacos: http://127.0.0.1:8848/nacos/
+  nacos:
+    image: nacos/nacos-server:${NACOS_VERSION:-latest}
+    container_name: nacos
+    env_file:
+      - ./docker/env/nacos.env
+    volumes:
+      - /tmp/logs/nacos/:/home/nacos/logs
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: always

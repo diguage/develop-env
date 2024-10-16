@@ -10,6 +10,14 @@
 
 TIP: 该构建上下文是当前目录。所以，在 `./docker/images/mysql.dockerfile` 中添加文件时，填写的是当前目录的相对路径。
 
+=== NACOS
+
+Nacos /nɑ:kəʊs/ 是 Dynamic Naming and Configuration Service的首字母简称，一个更易于构建云原生应用的动态服务发现、配置管理和服务管理平台。
+
+. 在 `./docker/config/mysql/init.sql` 文件中增加初始化数据库、账户和密码的 SQL 语句。
+. 添加数据库初始化脚本 `./docker/config/nacos/mysql-schema.sql` 到 `docker/images/mysql.dockerfile` 中。
+. 添加必要的环境变量配置文件 `./docker/env/nacos.env`。
+
 == 参考资料
 
 . https://github.com/nacos-group/nacos-docker/tree/master[nacos-group/nacos-docker^] -- example/standalone-mysql-5.7.yaml
