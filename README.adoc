@@ -1,0 +1,22 @@
+= Microservice 外部依赖
+
+使用 Docker 搭建开发环境的外部依赖
+
+== 组件
+
+=== MySQL
+
+通过在 `./docker/config/mysql/init.sql` 文件中增加相关 SQL 即可给不同的组件配置不同的数据库、账户和密码。
+
+TIP: 该构建上下文是当前目录。所以，在 `./docker/images/mysql.dockerfile` 中添加文件时，填写的是当前目录的相对路径。
+
+== 参考资料
+
+. https://github.com/nacos-group/nacos-docker/tree/master[nacos-group/nacos-docker^] -- example/standalone-mysql-5.7.yaml
+. https://dev.mysql.com/doc/refman/8.4/en/charset-mysql.html[Character Sets and Collations in MySQL 8.4^]
+. https://www.cnblogs.com/sparkdev/p/9573248.html[Dockerfile 中的 COPY 与 ADD 命令^]
+. https://blog.csdn.net/wmq880204/article/details/80591096[创建MySQL用户 赋予某指定库表的权限_grant all privileges on 指定表权限^]
+. https://blog.csdn.net/u014796999/article/details/53559747[mysql刷新权限命令_sql给guest用户设置查询、更新权限^]
+
+
+
