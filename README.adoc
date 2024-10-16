@@ -35,7 +35,7 @@ Nacos /nɑ:kəʊs/ 是 Dynamic Naming and Configuration Service的首字母简�
 . https://blog.csdn.net/u014796999/article/details/53559747[mysql刷新权限命令_sql给guest用户设置查询、更新权限^]
 . https://nacos.io/en-us/docs/v2/guide/admin/monitor-guide.html[Nacos monitor guide^]
 . https://blog.csdn.net/qq_32605245/article/details/134545714[最全docker之docker-compose.yml详解_docker-compose.yml^]
-. https://www.cnblogs.com/johnnyzen/p/17785405.html[[Docker] Docker Compose 基础教程（概念/基础操作）^]
+. https://www.cnblogs.com/johnnyzen/p/17785405.html[Docker Compose 基础教程（概念/基础操作）^]
 
 
 
