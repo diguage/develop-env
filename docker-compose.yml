@@ -19,12 +19,14 @@ services:
       retries: 10
 
   # Nacos: http://127.0.0.1:8848/nacos/
+  # http://localhost:8848/nacos/actuator/prometheus
   nacos:
     image: nacos/nacos-server:${NACOS_VERSION:-latest}
     container_name: nacos
     env_file:
       - ./docker/env/nacos.env
     volumes:
+      - ./docker/config/nacos/application.properties:/home/nacos/conf/application.properties
       - /tmp/logs/nacos/:/home/nacos/logs
     ports:
       - "8848:8848"
@@ -33,3 +35,17 @@ services:
       mysql:
         condition: service_healthy
     restart: always
+
+  # Prometheus: http://localhost:9090/
+  prometheus:
+    image: prom/prometheus:${PROMETHEUS_VERSION:-latest}
+    container_name: prometheus
+    restart: always
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./docker/config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - 9090:9090
+    depends_on:
+      - nacos

@@ -18,6 +18,14 @@ Nacos /nɑ:kəʊs/ 是 Dynamic Naming and Configuration Service的首字母简�
 . 添加数据库初始化脚本 `./docker/config/nacos/mysql-schema.sql` 到 `docker/images/mysql.dockerfile` 中。
 . 添加必要的环境变量配置文件 `./docker/env/nacos.env`。
 
+=== Prometheus
+
+添加新的组件，需要在 `./docker/config/prometheus/prometheus.yml` 中增加任务配置。
+
+== 常用命令
+
+. `docker exec -it nacos /bin/bash`
+
 == 参考资料
 
 . https://github.com/nacos-group/nacos-docker/tree/master[nacos-group/nacos-docker^] -- example/standalone-mysql-5.7.yaml
@@ -25,6 +33,7 @@ Nacos /nɑ:kəʊs/ 是 Dynamic Naming and Configuration Service的首字母简�
 . https://www.cnblogs.com/sparkdev/p/9573248.html[Dockerfile 中的 COPY 与 ADD 命令^]
 . https://blog.csdn.net/wmq880204/article/details/80591096[创建MySQL用户 赋予某指定库表的权限_grant all privileges on 指定表权限^]
 . https://blog.csdn.net/u014796999/article/details/53559747[mysql刷新权限命令_sql给guest用户设置查询、更新权限^]
+. https://nacos.io/en-us/docs/v2/guide/admin/monitor-guide.html[Nacos monitor guide^]
 
 
 
