@@ -42,6 +42,91 @@ http://localhost:3000/ admin/admin
 常用软件的 Grafana 监控面板可以在 https://grafana.com/grafana/dashboards/[Grafana dashboards^] 页面搜索，选择合适的面板，下载 JSON 导入即可。
 --
 
+=== Elasticsearch
+
+由于 Elasticsearch 8+ 的版本修改了安全策略，不允许 Kibana 使用超级管理员 `elastic` 连接 Elasticsearch，这里选用 7.x 版本做演示。
+
+还有一点需要提醒，在设置 Elasticsearch 的超级管理员 `elastic` 的账户密码时，如果密码是全部的阿拉伯数字，那么需要用双引号或者单引号括起来。
+
+在测试中，还遇到一个磁盘过载导致的只读问题。解决方式如下：
+
+. `curl -X GET "localhost:9200/_cat/allocation?v&pretty"` 查看磁盘使用情况
+. 解除只读状态
++
+--
+[source%nowrap,bash,{source_attr}]
+----
+$ curl -X PUT "localhost:9200/test/_settings" -H 'Content-Type: application/json' -d'
+{
+  "index.blocks.read_only_allow_delete": null
+}
+'
+----
+--
++
+. 调整磁盘使用阈值
++
+--
+[source%nowrap,bash,{source_attr}]
+----
+$ curl -X PUT "localhost:9200/_cluster/settings" -H 'Content-Type: application/json' -d'
+{
+  "persistent": {
+    "cluster.routing.allocation.disk.watermark.flood_stage": "97%", <1>
+    "cluster.routing.allocation.disk.watermark.high": "90%", <2>
+    "cluster.routing.allocation.disk.watermark.low": "85%",  <3>
+    "cluster.info.update.interval": "1m" <4>
+  }
+}
+'
+----
+<1> 当磁盘使用超过这个百分比时，索引会被设置为只读。
+<2> 当磁盘使用超过这个百分比时，Elasticsearch 会尝试将分片迁移到磁盘使用较少的节点。
+<3> 当磁盘使用超过这个百分比时，会触发分片的重新分配。
+<4> 更新磁盘使用信息的间隔时间。
+--
+
+=== Kibana
+
+配置好 Elasticsearch 的网址、账户、密码就可以启动访问了。
+
+在网上见到别人把 Kibana 整的很精美的监控图表，不知道是怎么搞的？回头再研究研究。
+
+=== Fluentd
+
+安装 Fluentd，通过 Fluentd 把 NACOS 和业务应用的日志传输到 Elasticsearch。目前先把 NACOS 的日志接入到 Elasticsearch。
+
+接入成功后，`curl http://localhost:9200/nacos*/_search?pretty` 验证 NACOS 日志接入到 Elasticsearch。
+
+下面重点介绍一下遇到的几个问题：
+
+==== 插件缺失导致的启动失败
+
+由于需求将日志输送到 Elasticsearch，这就需要 fluent-plugin-elasticsearch 插件。容器中，默认是没有安装的，启动时就会导致失败。
+
+两种解决办法：
+
+. 使用类似 MySQL 的办法，基于官方镜像，在里面装上插件，再打包一个新镜像。
+. 在 `docker-compose.yml` 中通过 `command` 指令，运行 Fluentd 时安装 fluent-plugin-elasticsearch 插件。
+
+为了简单起见，直接选择第二种方案。安装命令是： `command: ["sh", "-c", "gem install fluent-plugin-elasticsearch --no-document && fluentd -c /fluentd/etc/fluent.conf"]`。
+
+==== 由于权限导致的安装失败
+
+配置上述命令后，启动就遇到了该错误： `ERROR:  While executing gem ... (Gem::FilePermissionError)  You don't have write permissions for the /usr/lib/ruby/gems/3.2.0 directory.`。
+
+这是由于默认以 `fluent` 运行的，该用户对 `/usr/lib/ruby/gems/3.2.0` 没有写权限。所以，在安装插件时，就会报错。
+
+解决方案： 通过在 `docker-compose.yml` 中增加 `user: root` 配置，使用 `root` 来运行容器。
+
+==== 健康检查
+
+尝试了三种方案：
+
+. 启用 `monitor_agent` 插件，监控 `9880` 端口。失败！
+. 使用 `nc` 检查 Fluentd 监听的 `24224` 端口。失败！
+. 最后通过使用 `test: [ "CMD-SHELL", "pgrep fluentd || exit 1" ]` 来查看 Fluentd 的进程方式。成功！
+
 == 常用命令
 
 . `docker exec -it nacos /bin/bash`

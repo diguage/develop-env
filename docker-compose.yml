@@ -6,6 +6,8 @@ services:
       context: .
       dockerfile: ./docker/images/mysql.dockerfile
     image: example/mysql:8.4
+    environment:
+      - TZ=Asia/Shanghai  # 设置时区为上海时间
     env_file:
       - ./docker/env/mysql.env
     volumes:
@@ -14,39 +16,58 @@ services:
       - "3306:3306"
     healthcheck:
       test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
-      interval: 5s
-      timeout: 10s
-      retries: 10
+      interval: 30s  # 每 30 秒检查一次
+      timeout: 10s   # 请求超时时间为 10 秒
+      retries: 5     # 如果检查失败，最多重试 5 次
+      start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
 
   # Nacos: http://127.0.0.1:8848/nacos/
   # http://localhost:8848/nacos/actuator/prometheus
+  # http://localhost:8848/nacos/actuator/health
   nacos:
     image: nacos/nacos-server:${NACOS_VERSION:-latest}
     container_name: nacos
+    environment:
+      - TZ=Asia/Shanghai  # 设置时区为上海时间
     env_file:
       - ./docker/env/nacos.env
     volumes:
       - ./docker/config/nacos/application.properties:/home/nacos/conf/application.properties
-      - /tmp/logs/nacos/:/home/nacos/logs
+      - nacos_log:/home/nacos/logs
     ports:
       - "8848:8848"
       - "9848:9848"
-    restart: always
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8848/nacos/actuator/health" ]
+      interval: 30s  # 每 30 秒检查一次
+      timeout: 10s   # 请求超时时间为 10 秒
+      retries: 5     # 如果检查失败，最多重试 5 次
+      start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
     depends_on:
       mysql:
         condition: service_healthy
 
   # Prometheus: http://localhost:9090/
+  # http://localhost:9090/-/healthy
   prometheus:
     image: prom/prometheus:${PROMETHEUS_VERSION:-latest}
     container_name: prometheus
-    restart: always
+    environment:
+      - TZ=Asia/Shanghai  # 设置时区为上海时间
     command:
       - --config.file=/etc/prometheus/prometheus.yml
     volumes:
       - ./docker/config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
       - 9090:9090
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --spider -q http://localhost:9090/-/healthy || exit 1" ]
+      interval: 30s  # 每 30 秒检查一次
+      timeout: 10s   # 请求超时时间为 10 秒
+      retries: 5     # 如果检查失败，最多重试 5 次
+      start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
     depends_on:
       - nacos
 
@@ -58,9 +79,93 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
+      - TZ=Asia/Shanghai  # 设置时区为上海时间
+    volumes:
+      - ./data/grafana:/var/lib/grafana  # 将主机目录映射到 Grafana 容器内的 /var/lib/grafana
     ports:
       - 3000:3000
     restart: on-failure
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/api/health" ]
+      interval: 30s  # 每 30 秒检查一次
+      timeout: 10s   # 请求超时时间为 10 秒
+      retries: 5     # 如果检查失败，最多重试 5 次
+      start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
     depends_on:
       - prometheus
 
+  # ElasticSearch http://localhost:9200/
+  # http://localhost:9200/_cluster/health
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTICSEARCH_VERSION:-7.17.24}
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ELASTIC_PASSWORD='123456'  # 设置 elastic 用户的默认密码
+      - TZ=Asia/Shanghai  # 设置时区为上海时间
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./data/elasticsearch:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fsSL http://localhost:9200/_cluster/health || exit 1" ]
+      interval: 30s  # 每 30 秒检查一次
+      timeout: 10s   # 请求超时时间为 10 秒
+      retries: 5     # 如果检查失败，最多重试 5 次
+      start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
+
+  # Kibana http://localhost:5601
+  # http://localhost:5601/api/status
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${KIBANA_VERSION:-7.17.24}
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD='123456'
+      - TZ=Asia/Shanghai  # 设置时区为上海时间
+    ports:
+      - "5601:5601"
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:5601/api/status" ]
+      interval: 30s  # 每 30 秒检查一次
+      timeout: 10s   # 请求超时时间为 10 秒
+      retries: 5     # 如果检查失败，最多重试 5 次
+      start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
+    depends_on:
+      - elasticsearch
+
+  # Fluentd http://localhost:9880/api/plugins.json 插件的安装情况
+  fluentd:
+    image: fluentd:${FLUENTD_VERSION:-latest}
+    container_name: fluentd
+    user: root  # 使用 root 用户安装插件
+    ports:
+      - "24224:24224"
+      - "9880:9880"  # 开启监控端口
+    volumes:
+      - ./docker/config/fluentd/fluent.conf:/fluentd/etc/fluent.conf  # 挂载 Fluentd 配置文件
+      - ./data/fluentd:/fluentd/log  # 持久化 Fluentd 数据目录
+      - nacos_log:/var/log/nacos  # 挂载 NACOS 日志目录
+    environment:
+      FLUENT_ELASTICSEARCH_HOST: elasticsearch
+      FLUENT_ELASTICSEARCH_PORT: 9200
+    # command: ["sh", "-c", "gem install fluent-plugin-elasticsearch --no-document && fluentd -c /fluentd/etc/fluent.conf"]
+    command: [ "sh", "-c", "gem install fluent-plugin-elasticsearch --no-document && chown -R fluent /usr/lib/ruby/gems && fluentd -c /fluentd/etc/fluent.conf" ]
+    healthcheck:
+      test: [ "CMD-SHELL", "pgrep fluentd || exit 1" ]
+      interval: 30s  # 每 30 秒检查一次
+      timeout: 10s   # 请求超时时间为 10 秒
+      retries: 5     # 如果检查失败，最多重试 5 次
+      start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
+    depends_on:
+      - elasticsearch
+
+volumes:
+  nacos_log:
