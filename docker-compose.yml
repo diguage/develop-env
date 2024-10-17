@@ -31,10 +31,10 @@ services:
     ports:
       - "8848:8848"
       - "9848:9848"
+    restart: always
     depends_on:
       mysql:
         condition: service_healthy
-    restart: always
 
   # Prometheus: http://localhost:9090/
   prometheus:
@@ -55,7 +55,12 @@ services:
   grafana:
     container_name: grafana
     image: grafana/grafana:${GRAFANA_VERSION:-latest}
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
     ports:
       - 3000:3000
     restart: on-failure
+    depends_on:
+      - prometheus
 

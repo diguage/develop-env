@@ -8,9 +8,16 @@
 
 通过在 `./docker/config/mysql/init.sql` 文件中增加相关 SQL 即可给不同的组件配置不同的数据库、账户和密码。
 
+[source%nowrap,bash,{source_attr}]
+----
+$ mysql -h127.0.0.1 -uroot -p123456
+----
+
 TIP: 该构建上下文是当前目录。所以，在 `./docker/images/mysql.dockerfile` 中添加文件时，填写的是当前目录的相对路径。
 
 === NACOS
+
+http://127.0.0.1:8848/nacos/
 
 Nacos /nɑ:kəʊs/ 是 Dynamic Naming and Configuration Service的首字母简称，一个更易于构建云原生应用的动态服务发现、配置管理和服务管理平台。
 
@@ -20,7 +27,20 @@ Nacos /nɑ:kəʊs/ 是 Dynamic Naming and Configuration Service的首字母简�
 
 === Prometheus
 
+http://localhost:9090/
+
 添加新的组件，需要在 `./docker/config/prometheus/prometheus.yml` 中增加任务配置。
+
+=== Grafana
+
+http://localhost:3000/ admin/admin
+
+. 添加 Prometheus 类型的 Data Source，URL： http://prometheus:9090，请求方法： GET
+. 添加监控面板，将 https://github.com/nacos-group/nacos-template/blob/master/nacos-grafana.json[模板] （本地目录： ./docker/config/grafana/provisioning/dashboards/nacos.json） 导入即可。
++
+--
+常用软件的 Grafana 监控面板可以在 https://grafana.com/grafana/dashboards/[Grafana dashboards^] 页面搜索，选择合适的面板，下载 JSON 导入即可。
+--
 
 == 常用命令
 
