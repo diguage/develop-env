@@ -88,6 +88,8 @@ $ curl -X PUT "localhost:9200/_cluster/settings" -H 'Content-Type: application/j
 
 === Kibana
 
+http://localhost:5601
+
 配置好 Elasticsearch 的网址、账户、密码就可以启动访问了。
 
 在网上见到别人把 Kibana 整的很精美的监控图表，不知道是怎么搞的？回头再研究研究。
@@ -167,7 +169,7 @@ OpenTelemetry 并不需要在 Docker 中启动或者配置什么。在目前的�
   - job_name: 'mall-system'
     metrics_path: '/metrics'
     static_configs:
-      - targets: ['host.docker.internal:8099'] # <1>
+      - targets: ['host.docker.internal:8099'] <1>
 ----
 <1> 从 Docker 容器访问主机端口，使用 `host.docker.internal`。
 
