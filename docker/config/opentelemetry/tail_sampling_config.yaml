@@ -1,0 +1,205 @@
+batch:
+tail_sampling:
+  # 在采样决策之前等待的时间。这个时间允许 collector 收集更多的
+  # 追踪数据，以便基于更完整的信息进行决策。5s 表示等待 5 秒后进行采样决策。
+  # 确保采样决策基于完整的追踪数据，而不是追踪开始后的即时数据。
+  decision_wait: 5s
+  # 决定如何批量处理追踪数据。具体来说，这是一个用于批处理采样决策的追踪数量阈值。
+  # 100 表示每处理 100 个追踪数据后进行一次采样决策。
+  # 优化性能，通过批量处理减少资源消耗。
+  num_traces: 100
+  # 预期每秒钟接收的新追踪数量。这个参数用于调整采样策略的性能和资源使用。
+  # 10 表示预期每秒钟有 10 个新追踪到达。
+  # 帮助处理器优化其内部数据结构和性能，以适应流量模式。
+  expected_new_traces_per_sec: 10
+  # 配置用于存储已采样追踪的缓存设置。
+  decision_cache:
+    # 缓存中可存储的已采样追踪的最大数量。500 表示缓存最多存储 500 个已采样的追踪。
+    # 控制缓存的大小，防止内存占用过高。
+    sampled_cache_size: 500
+  # 定义一组采样策略，决定哪些追踪应被采样（保留）或丢弃。采样决策按顺序应用，直到一个策略匹配。
+  policies:
+    [
+      #      # 采样所有追踪数据
+      #      # 通常用于开发环境或需要确保所有追踪数据都被保留的场景。
+      #      {
+      #        name: test-policy-1,
+      #        type: always_sample
+      #      },
+
+      # 基于追踪的延迟时间来决定是否采样。延迟阈值（毫秒）。
+      # 有助于识别和分析性能瓶颈或异常延迟的追踪。
+      {
+        name: test-policy-2,
+        type: latency,
+        # 如果一个追踪的总延迟时间超过 119 毫秒，则该追踪将被采样。延迟阈值（毫秒）。
+        latency: { threshold_ms: 119 }
+      },
+
+      #      # 基于追踪中指定数值属性的值范围来决定是否采样
+      #      # 用于基于业务或技术指标的数值属性进行采样。例如，响应时间、请求大小等。
+      #      {
+      #        name: test-policy-3,
+      #        type: numeric_attribute,
+      #        # 如果追踪中的 key1 属性值在 50 到 100 之间（包括边界值），则该追踪将被采样。
+      #        numeric_attribute: { key: key1, min_value: 50, max_value: 100 }
+      #      },
+      #
+      # 基于概率进行采样，即以一定的概率采样追踪数据。
+      # 用于控制采样率，以在保持数据质量的同时减少数据量。
+      {
+        name: test-policy-4,
+        type: probabilistic,
+        # hash_salt：用于哈希计算的盐值。
+        # sampling_percentage：采样百分比，20 表示 20% 的追踪将被采样。
+        probabilistic: {
+          hash_salt: "39b68c2b07f28452df4e64357e749139",
+          sampling_percentage: 20
+        }
+      },
+
+      # 基于追踪的状态码来决定是否采样。
+      # 用于重点关注有错误或未设置状态码的追踪，以便快速识别和修复问题。
+      {
+        name: test-policy-5,
+        type: status_code,
+        # status_codes：要匹配的状态码列表。
+        status_code: { status_codes: [ ERROR ] }
+      },
+
+      #      # 基于追踪中指定字符串属性的值来决定是否采样。
+      #      # 用于基于特定字符串属性进行采样，例如用户 ID、请求类型等。
+      #      {
+      #        name: test-policy-6,
+      #        type: string_attribute,
+      #        # 如果追踪中的 key2 属性值为 value1 或 value2，则该追踪将被采样。
+      #        string_attribute: { key: key2, values: [ value1, value2 ] }
+      #      },
+      #
+      #      # 基于速率限制进行采样，即限制每秒采样的追踪数量。
+      #      # 用于控制采样速率，防止数据量过大，保护后端存储和分析系统的负载。
+      #      {
+      #        name: test-policy-7,
+      #        type: rate_limiting,
+      #        # spans_per_second：每秒采样的最大追踪数量。
+      #        # 限制每秒被采样的追踪数量，超出部分将被丢弃。
+      #        rate_limiting: { spans_per_second: 35 }
+      #      },
+      #
+      #      # 基于追踪中 span 的数量来决定是否采样。
+      #      # 用于筛选 span 数量在特定范围内的追踪，适用于需要关注特定复杂度或规模的追踪。
+      #      {
+      #        name: test-policy-8,
+      #        type: span_count,
+      #        # 如果追踪中的 span 数量在 2 到 20 之间（包括边界值），则该追踪将被采样。
+      #        span_count: { min_spans: 2, max_spans: 20 }
+      #      },
+      #      # 基于追踪中的 trace state 信息来决定是否采样。
+      #      # 用于基于 trace state 信息进行采样，例如根据特定的上下文或用户属性筛选追踪。
+      #      {
+      #        name: test-policy-9,
+      #        type: trace_state,
+      #        # 如果追踪的 trace state 中，键为 key3 且值为 value1 或 value2，则该追踪将被采样。
+      #        trace_state: { key: key3, values: [ value1, value2 ] }
+      #      },
+      #      # 基于追踪中指定布尔属性的值来决定是否采样。
+      #      # 用于基于布尔属性进行采样，例如是否启用详细日志记录的追踪。
+      #      {
+      #        name: test-policy-10,
+      #        type: boolean_attribute,
+      #        # 如果追踪中的 key4 属性值为 true，则该追踪将被采样。
+      #        boolean_attribute: { key: key4, value: true }
+      #      },
+      #      # 使用 OpenTelemetry Transformation Language（OTTL）条件进行采样决策。
+      #      # OTTL 提供了一种灵活的方式来定义复杂的采样逻辑。
+      #      # 用于实现高度定制化的采样逻辑，适用于需要基于多个条件和复杂逻辑进行采样的场景。
+      #      {
+      #        name: test-policy-11,
+      #        type: ottl_condition,
+      #        # 条件表达式可以针对 span 的属性和 span event 的属性进行复杂的逻辑判断。
+      #        ottl_condition: {
+      #          # error_mode：错误处理模式，ignore，表示在条件评估出现错误时忽略该条件。
+      #          error_mode: ignore,
+      #          # span：针对 span 的条件表达式列表。
+      #          span: [
+      #            "attributes[\"test_attr_key_1\"] == \"test_attr_val_1\"",
+      #            "attributes[\"test_attr_key_2\"] != \"test_attr_val_1\"",
+      #          ],
+      #          # spanevent：针对 span event 的条件表达式列表。
+      #          spanevent: [
+      #            "name != \"test_span_event_name\"",
+      #            "attributes[\"test_event_attr_key_2\"] != \"test_event_attr_val_1\"",
+      #          ]
+      #        }
+      #      },
+      #      # 组合多个子策略，要求所有子策略都匹配时，才采样追踪。
+      #      # 用于需要多个条件同时满足时才采样的场景，提高采样决策的精确性。
+      #      {
+      #        name: and-policy-1,
+      #        type: and,
+      #        and: {
+      #          # and_sub_policy：子策略数组。
+      #          and_sub_policy:
+      #            [
+      #              {
+      #                name: test-and-policy-1,
+      #                type: numeric_attribute,
+      #                numeric_attribute: { key: key1, min_value: 50, max_value: 100 }
+      #              },
+      #              {
+      #                name: test-and-policy-2,
+      #                type: string_attribute,
+      #                string_attribute: { key: key2, values: [ value1, value2 ] }
+      #              },
+      #            ]
+      #        }
+      #      },
+      #      # 组合多个子策略，并通过速率分配进行采样决策。允许定义复杂的采样逻辑和速率分配。
+      #      # 1. 根据 policy_order 的顺序依次应用子策略。
+      #      # 2. 对于每个子策略，根据 rate_allocation 定义的百分比决定采样比例。
+      #      # 3. 整体采样速率不会超过 max_total_spans_per_second。
+      #      # 用于需要多个采样策略组合，并且每个策略有不同采样速率的复杂场景。
+      #      # 例如，基于不同的属性和业务需求进行不同速率的采样。
+      #      {
+      #        name: composite-policy-1,
+      #        type: composite,
+      #        composite:
+      #          {
+      #            # max_total_spans_per_second：每秒最大采样的追踪数量。1000 表示每秒最多采样 1000 个追踪。
+      #            max_total_spans_per_second: 1000,
+      #            # policy_order：定义子策略的执行顺序。
+      #            policy_order: [ test-composite-policy-1, test-composite-policy-2, test-composite-policy-3 ],
+      #            # 子策略数组。
+      #            composite_sub_policy:
+      #              [
+      #                {
+      #                  name: test-composite-policy-1,
+      #                  type: numeric_attribute,
+      #                  numeric_attribute: { key: key1, min_value: 50, max_value: 100 }
+      #                },
+      #                {
+      #                  name: test-composite-policy-2,
+      #                  type: string_attribute,
+      #                  string_attribute: { key: key2, values: [ value1, value2 ] }
+      #                },
+      #                {
+      #                  name: test-composite-policy-3,
+      #                  type: always_sample
+      #                }
+      #              ],
+      #            # rate_allocation：定义各子策略的采样速率分配。
+      #            rate_allocation:
+      #              [
+      #                {
+      #                  policy: test-composite-policy-1,
+      #                  # 50，即 50% 的采样比例。
+      #                  percent: 50
+      #                },
+      #                {
+      #                  policy: test-composite-policy-2,
+      #                  percent: 25
+      #                }
+      #              ]
+      #          }
+      #      },
+    ]

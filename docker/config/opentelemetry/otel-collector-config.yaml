@@ -1,0 +1,112 @@
+# https://opentelemetry.io/docs/collector/configuration/
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors: ${file:/etc/otelcol-contrib/tail_sampling_config.yaml}
+
+
+exporters:
+  otlp:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true # 根据实际情况配置 TLS
+
+extensions:
+  health_check:
+  pprof:
+  zpages:
+
+service:
+  extensions: [ health_check, pprof, zpages ]
+  pipelines:
+    traces:
+      receivers: [ otlp ]
+      processors: [ batch, tail_sampling ]
+      exporters: [ otlp ]
+
+#  otlp/2:
+#    endpoint: otelcol2:4317
+#  # Data sources: traces
+#  otlp/jaeger:
+#    endpoint: jaeger:4317
+
+#receivers:
+#  otlp:
+#    protocols:
+#      grpc:
+#        endpoint: 0.0.0.0:4317
+#      http:
+#        endpoint: 0.0.0.0:4318
+#  otlp/2:
+#    protocols:
+#      grpc:
+#        endpoint: 0.0.0.0:55690
+#
+#
+#processors:
+#  batch:
+#
+#exporters:
+#  otlp:
+#    endpoint: otelcol:4317
+#  otlp/2:
+#    endpoint: otelcol2:4317
+#  # Data sources: traces
+#  otlp/jaeger:
+#    endpoint: jaeger:4317
+#
+#extensions:
+#  health_check:
+#  pprof:
+#  zpages:
+#
+#service:
+#  extensions: [health_check, pprof, zpages]
+#  pipelines:
+#    traces:
+#      receivers: [otlp]
+#      processors: [batch]
+#      exporters: [otlp]
+#    traces/2:
+#      receivers: [otlp/2]
+#      processors: [batch/test]
+#      exporters: [otlp/2]
+#    metrics:
+#      receivers: [otlp]
+#      processors: [batch]
+#      exporters: [otlp]
+#    logs:
+#      receivers: [otlp]
+#      processors: [batch]
+#      exporters: [otlp]
+
+# processors:
+#   batch:
+#   tail_sampling:
+#     decision_wait: 5s                   # 等待决策的时间，通常设置为追踪完成后的延迟
+#     num_traces: 10000                   # 内存中保留的最大追踪数量
+#     expected_new_traces_per_sec: 200    # 预期每秒新增的追踪数量
+#     policies:
+#       - name: error_sampling
+#         type: status
+#         criteria:
+#           status_code: "error"          # 当追踪包含错误时进行采样
+#         sample_ratio: 1.0                # 100% 采样符合条件的追踪
+
+#       - name: latency_sampling
+#         type: latency
+#         criteria:
+#           min_latency: 1s                # 最小持续时间阈值，例如 1 秒
+#         sample_ratio: 1.0                # 100% 采样符合条件的追踪
+
+#       - name: probabilistic_sampling
+#         type: probabilistic
+#         criteria:
+#           rate: 0.05                      # 对其他追踪进行 5% 的概率采样
+
+
