@@ -127,6 +127,54 @@ $ curl -X PUT "localhost:9200/_cluster/settings" -H 'Content-Type: application/j
 . 使用 `nc` 检查 Fluentd 监听的 `24224` 端口。失败！
 . 最后通过使用 `test: [ "CMD-SHELL", "pgrep fluentd || exit 1" ]` 来查看 Fluentd 的进程方式。成功！
 
+== Jaeger
+
+http://localhost:16686
+
+最新版的 Jaeger 都被集成到了 `jaegertracing/all-in-one` 这个一个镜像中。简化了很多配置。
+
+初次使用 Jaeger，肯定会惊讶于它居然需要这么多端口号，具体端口号的解释见： https://www.jaegertracing.io/docs/1.62/getting-started/[Jaeger Getting Started^]。
+
+== OpenTelemetry
+
+OpenTelemetry 并不需要在 Docker 中启动或者配置什么。在目前的架构中，Jaeger 是作为 OpenTelemetry 的一个实现来出现的。 OpenTelemetry 需要做的就是下载一个 Java Agent，执行 `docker/config/opentelemetry/download-opentelemetry-agent.sh` 脚本即可下载最新版的 Java Agent。在业务应用启动时，增加如下 JVM 参数：
+
+[source%nowrap,{source_attr}]
+----
+-javaagent:/path/to/opentelemetry-javaagent.jar
+-Dotel.service.name=<业务系统名称>
+-Dotel.traces.exporter=otlp <1>
+-Dotel.exporter.otlp.endpoint="http://localhost:4318" <2>
+-Dotel.exporter.otlp.protocol=http/protobuf <3>
+-Dotel.logs.exporter=console  <4>
+-Dotel.metrics.exporter=prometheus <5>
+-Dotel.exporter.prometheus.port=8079 <6>
+-Dotel.metric.export.interval=1000 <7>
+----
+<1> 选择 `otlp` exporter
+<2> `otlp` exporter 的网址
+<3> 传输协议。这个必须和 `otel.exporter.otlp.endpoint` 配置项及 Jaeger 暴露的端口相对应，否则传输失败。
+<4> 将日志输出到控制台。
+<5> 将 Metrics 信息导出到 Prometheus
+<6> Metrics 导出的端口。Prometheus 会从端口号拉去，路径是 `/metrics`。
+<7> Metrics 统计间隔。
+
+应用启动后，可以在 Prometheus 的配置文件 `docker/config/prometheus/prometheus.yml` 中增加相关配置：
+
+[source%nowrap,yaml,{source_attr}]
+----
+  # 业务系统：商城
+  - job_name: 'mall-system'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:8099'] # <1>
+----
+<1> 从 Docker 容器访问主机端口，使用 `host.docker.internal`。
+
+这样就会拉去业务系统的监控信息，可以在 http://localhost:9090/targets 页面看到系统的运行状况。
+
+详细配置见： https://opentelemetry.io/docs/languages/java/configuration/[OpenTelemetry Configure the SDK^]。
+
 == 常用命令
 
 . `docker exec -it nacos /bin/bash`

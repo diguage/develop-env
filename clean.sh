@@ -18,3 +18,5 @@ docker container rm -f elasticsearch
 docker container rm -f kibana
 
 docker container rm -f fluentd
+
+docker container rm -f jaeger

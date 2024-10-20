@@ -63,7 +63,7 @@ services:
       - 9090:9090
     restart: on-failure
     healthcheck:
-      test: [ "CMD-SHELL", "wget --spider -q http://localhost:9090/-/healthy || exit 1" ]
+      test: ["CMD", "wget", "--spider", "http://localhost:9090/-/healthy"]
       interval: 30s  # 每 30 秒检查一次
       timeout: 10s   # 请求超时时间为 10 秒
       retries: 5     # 如果检查失败，最多重试 5 次
@@ -156,6 +156,7 @@ services:
     environment:
       FLUENT_ELASTICSEARCH_HOST: elasticsearch
       FLUENT_ELASTICSEARCH_PORT: 9200
+      TZ: Asia/Shanghai  # 设置时区为上海时间
     # command: ["sh", "-c", "gem install fluent-plugin-elasticsearch --no-document && fluentd -c /fluentd/etc/fluent.conf"]
     command: [ "sh", "-c", "gem install fluent-plugin-elasticsearch --no-document && chown -R fluent /usr/lib/ruby/gems && fluentd -c /fluentd/etc/fluent.conf" ]
     healthcheck:
@@ -166,6 +167,31 @@ services:
       start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
     depends_on:
       - elasticsearch
+
+  # Jaeger: http://localhost:16686
+  jaeger:
+    image: jaegertracing/all-in-one:${JAEGER_VERSION:-latest}
+    container_name: jaeger
+    environment:
+      - TZ=Asia/Shanghai  # 设置时区为上海时间
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # Jaeger Collector HTTP, accept jaeger.thrift directly from clients
+      - "14250:14250"  # Jaeger Collector gRPC, accept model.proto
+      - "4317:4317"  # accept OpenTelemetry Protocol (OTLP) over gRPC
+      - "4318:4318"  # accept OpenTelemetry Protocol (OTLP) over HTTP
+      - "9411:9411" # Zipkin compatible endpoint (optional)
+      - "6831:6831/udp"  # accept jaeger.thrift over Thrift-compact protocol (used by most SDKs)
+      - "6832:6832/udp" # accept jaeger.thrift over Thrift-binary protocol (used by Node.js SDK)
+      - "5775:5775/udp" # (deprecated) accept zipkin.thrift over compact Thrift protocol (used by legacy clients only)
+      - "5778:5778"   # serve configs (sampling, etc.)
+    # https://www.jaegertracing.io/docs/1.62/getting-started/ 各端口用途
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:16686/"]
+      interval: 30s  # 每 30 秒检查一次
+      timeout: 10s   # 请求超时时间为 10 秒
+      retries: 5     # 如果检查失败，最多重试 5 次
+      start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
 
 volumes:
   nacos_log:

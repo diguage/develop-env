@@ -4,3 +4,5 @@ data/grafana/
 data/fluentd/
 .idea/
 .env
+
+opentelemetry-javaagent.jar
