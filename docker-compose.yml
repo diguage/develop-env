@@ -212,5 +212,280 @@ services:
     depends_on:
       - jaeger
 
+#  sentinel:
+#    image: sentinel:1.8.8
+#    container_name: sentinel
+#    environment:
+#      - TZ=Asia/Shanghai  # 设置时区为上海时间
+#    ports:
+#      - "8060:8080"  # Jaeger UI
+
+  # Redis Cluster
+  # https://hub.docker.com/r/bitnami/redis-cluster
+  # 原来是五主无从，后改成了三主六从，多出来的一个也自动成了从节点。
+  redis-node-0:
+    image: bitnami/redis-cluster:7.4
+    container_name: redis-node-0
+    volumes:
+      - redis-cluster_data-0:/bitnami/redis/data
+    environment:
+      - TZ=Asia/Shanghai  # 设置时区为上海时间
+      - 'REDIS_PASSWORD=123456'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5 redis-node-6 redis-node-7 redis-node-8 redis-node-9'
+    ports:
+      - 6379:6379
+    deploy:
+      resources:
+        limits:
+          cpus: '0.20'
+          memory: 32M
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 30s  # 每 30 秒检查一次
+      timeout: 10s   # 请求超时时间为 10 秒
+      retries: 5     # 如果检查失败，最多重试 5 次
+      start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
+
+  redis-node-1:
+    image: bitnami/redis-cluster:7.4
+    container_name: redis-node-1
+    volumes:
+      - redis-cluster_data-1:/bitnami/redis/data
+    environment:
+      - TZ=Asia/Shanghai  # 设置时区为上海时间
+      - 'REDIS_PASSWORD=123456'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5 redis-node-6 redis-node-7 redis-node-8 redis-node-9'
+    ports:
+      - 16379:6379
+    deploy:
+      resources:
+        limits:
+          cpus: '0.20'
+          memory: 32M
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 30s  # 每 30 秒检查一次
+      timeout: 10s   # 请求超时时间为 10 秒
+      retries: 5     # 如果检查失败，最多重试 5 次
+      start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
+
+  redis-node-2:
+    image: bitnami/redis-cluster:7.4
+    container_name: redis-node-2
+    volumes:
+      - redis-cluster_data-2:/bitnami/redis/data
+    environment:
+      - TZ=Asia/Shanghai  # 设置时区为上海时间
+      - 'REDIS_PASSWORD=123456'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5 redis-node-6 redis-node-7 redis-node-8 redis-node-9'
+    ports:
+      - 26379:6379
+    deploy:
+      resources:
+        limits:
+          cpus: '0.20'
+          memory: 32M
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 30s  # 每 30 秒检查一次
+      timeout: 10s   # 请求超时时间为 10 秒
+      retries: 5     # 如果检查失败，最多重试 5 次
+      start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
+
+  redis-node-3:
+    image: bitnami/redis-cluster:7.4
+    container_name: redis-node-3
+    volumes:
+      - redis-cluster_data-3:/bitnami/redis/data
+    environment:
+      - TZ=Asia/Shanghai  # 设置时区为上海时间
+      - 'REDIS_PASSWORD=123456'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5 redis-node-6 redis-node-7 redis-node-8 redis-node-9'
+    ports:
+      - 36379:6379
+    deploy:
+      resources:
+        limits:
+          cpus: '0.20'
+          memory: 32M
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 30s  # 每 30 秒检查一次
+      timeout: 10s   # 请求超时时间为 10 秒
+      retries: 5     # 如果检查失败，最多重试 5 次
+      start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
+
+  redis-node-4:
+    image: bitnami/redis-cluster:7.4
+    container_name: redis-node-4
+    volumes:
+      - redis-cluster_data-4:/bitnami/redis/data
+    environment:
+      - TZ=Asia/Shanghai  # 设置时区为上海时间
+      - 'REDIS_PASSWORD=123456'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5 redis-node-6 redis-node-7 redis-node-8 redis-node-9'
+    ports:
+      - 46379:6379
+    deploy:
+      resources:
+        limits:
+          cpus: '0.20'
+          memory: 32M
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 30s  # 每 30 秒检查一次
+      timeout: 10s   # 请求超时时间为 10 秒
+      retries: 5     # 如果检查失败，最多重试 5 次
+      start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
+
+  redis-node-5:
+    image: bitnami/redis-cluster:7.4
+    container_name: redis-node-5
+    volumes:
+      - redis-cluster_data-5:/bitnami/redis/data
+    environment:
+      - TZ=Asia/Shanghai  # 设置时区为上海时间
+      - 'REDIS_PASSWORD=123456'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5 redis-node-6 redis-node-7 redis-node-8 redis-node-9'
+    ports:
+      - 56379:6379
+    deploy:
+      resources:
+        limits:
+          cpus: '0.20'
+          memory: 32M
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 30s  # 每 30 秒检查一次
+      timeout: 10s   # 请求超时时间为 10 秒
+      retries: 5     # 如果检查失败，最多重试 5 次
+      start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
+
+  redis-node-6:
+    image: bitnami/redis-cluster:7.4
+    container_name: redis-node-6
+    volumes:
+      - redis-cluster_data-6:/bitnami/redis/data
+    environment:
+      - TZ=Asia/Shanghai  # 设置时区为上海时间
+      - 'REDIS_PASSWORD=123456'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5 redis-node-6 redis-node-7 redis-node-8 redis-node-9'
+    ports:
+      - 16380:6379
+    deploy:
+      resources:
+        limits:
+          cpus: '0.20'
+          memory: 32M
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 30s  # 每 30 秒检查一次
+      timeout: 10s   # 请求超时时间为 10 秒
+      retries: 5     # 如果检查失败，最多重试 5 次
+      start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
+
+  redis-node-7:
+    image: bitnami/redis-cluster:7.4
+    container_name: redis-node-7
+    volumes:
+      - redis-cluster_data-7:/bitnami/redis/data
+    environment:
+      - TZ=Asia/Shanghai  # 设置时区为上海时间
+      - 'REDIS_PASSWORD=123456'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5 redis-node-6 redis-node-7 redis-node-8 redis-node-9'
+    ports:
+      - 26380:6379
+    deploy:
+      resources:
+        limits:
+          cpus: '0.20'
+          memory: 32M
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 30s  # 每 30 秒检查一次
+      timeout: 10s   # 请求超时时间为 10 秒
+      retries: 5     # 如果检查失败，最多重试 5 次
+      start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
+
+  redis-node-8:
+    image: bitnami/redis-cluster:7.4
+    container_name: redis-node-8
+    volumes:
+      - redis-cluster_data-8:/bitnami/redis/data
+    environment:
+      - TZ=Asia/Shanghai  # 设置时区为上海时间
+      - 'REDIS_PASSWORD=123456'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5 redis-node-6 redis-node-7 redis-node-8 redis-node-9'
+    ports:
+      - 36380:6379
+    deploy:
+      resources:
+        limits:
+          cpus: '0.20'
+          memory: 32M
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 30s  # 每 30 秒检查一次
+      timeout: 10s   # 请求超时时间为 10 秒
+      retries: 5     # 如果检查失败，最多重试 5 次
+      start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
+
+  # 最后启动节点，构建 Redis 集群
+  redis-node-9:
+    image: bitnami/redis-cluster:7.4
+    container_name: redis-node-9
+    volumes:
+      - redis-cluster_data-9:/bitnami/redis/data
+    depends_on:
+      - redis-node-0
+      - redis-node-1
+      - redis-node-2
+      - redis-node-3
+      - redis-node-4
+      - redis-node-5
+      - redis-node-6
+      - redis-node-7
+      - redis-node-8
+    environment:
+      - TZ=Asia/Shanghai  # 设置时区为上海时间
+      - 'REDIS_PASSWORD=123456'
+      - 'REDISCLI_AUTH=123456'
+      - 'REDIS_CLUSTER_REPLICAS=2'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5 redis-node-6 redis-node-7 redis-node-8 redis-node-9'
+      - 'REDIS_CLUSTER_CREATOR=yes'
+    ports:
+      - 46380:6379
+    deploy:
+      resources:
+        limits:
+          cpus: '0.20'
+          memory: 32M
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 30s  # 每 30 秒检查一次
+      timeout: 10s   # 请求超时时间为 10 秒
+      retries: 5     # 如果检查失败，最多重试 5 次
+      start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
+
 volumes:
   nacos_log:
+  redis-cluster_data-0:
+    driver: local
+  redis-cluster_data-1:
+    driver: local
+  redis-cluster_data-2:
+    driver: local
+  redis-cluster_data-3:
+    driver: local
+  redis-cluster_data-4:
+    driver: local
+  redis-cluster_data-5:
+    driver: local
+  redis-cluster_data-6:
+    driver: local
+  redis-cluster_data-7:
+    driver: local
+  redis-cluster_data-8:
+    driver: local
+  redis-cluster_data-9:
+    driver: local

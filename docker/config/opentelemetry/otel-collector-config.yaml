@@ -26,7 +26,7 @@ service:
   pipelines:
     traces:
       receivers: [ otlp ]
-      processors: [ batch, tail_sampling ]
+      processors: [ tail_sampling, batch ]
       exporters: [ otlp ]
 
 #  otlp/2:

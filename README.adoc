@@ -184,6 +184,14 @@ OpenTelemetry 并不需要在 Docker 中启动或者配置什么。在目前的�
 在 `docker/config/opentelemetry/tail_sampling_config.yaml` 文件中，有尾部采样的配置示例：①超长耗时采样；②错误请求采样；③百分比随机采样。
 
 
+== Redis Cluster
+
+基于 https://hub.docker.com/r/bitnami/redis-cluster[bitnami/redis-cluster^]，参考 https://github.com/bitnami/containers/blob/main/bitnami/redis-cluster/docker-compose.yml[bitnami/redis-cluster/docker-compose.yml^] 搭建 Redis Cluster 集群。
+
+不能在本地访问：从初始化连接获取集群信息后，内部是 Docker Bridge 桥接的网段，本地不能访问。
+
+* [ ] 也许可以通过配置网络能进行访问。可以尝试一下。
+
 == 常用命令
 
 . `docker exec -it nacos /bin/bash`
