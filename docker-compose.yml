@@ -170,7 +170,7 @@ services:
 
   # Jaeger: http://localhost:16686
   jaeger:
-    image: jaegertracing/all-in-one:${JAEGER_VERSION:-latest}
+    image: jaegertracing/jaeger:${JAEGER_VERSION:-latest}
     container_name: jaeger
     environment:
       - TZ=Asia/Shanghai  # 设置时区为上海时间
