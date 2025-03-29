@@ -1,0 +1,52 @@
+services:
+  # mysql -h127.0.0.1 -uroot -p123456
+  mysql:
+    container_name: mysql
+    build:
+      context: .
+      dockerfile: ./docker/images/mysql.dockerfile
+    image: example/mysql:8.4
+    environment:
+      - TZ=Asia/Shanghai  # 设置时区为上海时间
+    env_file:
+      - ./docker/env/mysql.env
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      interval: 30s  # 每 30 秒检查一次
+      timeout: 10s   # 请求超时时间为 10 秒
+      retries: 5     # 如果检查失败，最多重试 5 次
+      start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
+
+  # Nacos: http://127.0.0.1:8848/nacos/
+  # http://localhost:8848/nacos/actuator/prometheus
+  # http://localhost:8848/nacos/actuator/health
+  nacos:
+    image: nacos/nacos-server:${NACOS_VERSION:-latest}
+    container_name: nacos
+    environment:
+      - TZ=Asia/Shanghai  # 设置时区为上海时间
+    env_file:
+      - ./docker/env/nacos.env
+    volumes:
+      - ./docker/config/nacos/application.properties:/home/nacos/conf/application.properties
+      - nacos_log:/home/nacos/logs
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8848/nacos/actuator/health" ]
+      interval: 30s  # 每 30 秒检查一次
+      timeout: 10s   # 请求超时时间为 10 秒
+      retries: 5     # 如果检查失败，最多重试 5 次
+      start_period: 60s  # 等待 60 秒后再开始进行 healthcheck
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  nacos_log:
